@@ -1,14 +1,15 @@
-from dataclasses 	import dataclass
+from dataclasses import dataclass
 
 import numpy as np
+
 
 WORLD_WIDTH_SCALE = 50
 WORLD_HIGHT_SCALE = 50
 
 PLAYERS_SIZE		= 50
-PLAYER_START_HP		= 100
-PLAYER_START_ENERGY	= 100
-PLAYER_START_SPEED	= 1
+PLAYER_MAX_HP		= 200
+PLAYER_MAX_ENERGY	= 200
+PLAYER_MAX_SPEED	= 3
 PLAYER_BMR_ENERGY	= 3
 
 FOODS_SIZE			= 30
@@ -17,6 +18,11 @@ FOOD_START_ENERGY	= 30
 SUBSTANCE_A_ENERGY	= 1
 
 
+@dataclass
+class Color:
+	r : int #0-255
+	g : int #0-255
+	b : int #0-255
 
 class Vector2:...
 @dataclass
@@ -75,10 +81,16 @@ class World:
 
 class Player:
 	def __init__(self, position : Vector2):
-		self.position:Vector2	= position
-		self.hp		: int 		= PLAYER_START_HP
-		self.energy	: int 		= PLAYER_START_ENERGY
-		self.alive 	: bool		= True
+		self.speciesId	: Color
+		self.position	: Vector2	= position
+		self.hp			: int
+		self.maxEnergy	: int
+		self.breedEnergy: int
+		self.energy		: int
+		self.speed		: float
+		self.alive 		: bool		= True
+
+		self.set_value()
 	
 	def move(self):
 		closestFood = world.foods[
@@ -90,7 +102,7 @@ class Player:
 		foodLocalPosX = closestFood.position.x - self.position.x
 		foodLocalPosY = closestFood.position.y - self.position.y
 
-		Scale = PLAYER_START_SPEED / (np.abs(foodLocalPosX) + np.abs(foodLocalPosY))
+		Scale = self.speed / (np.abs(foodLocalPosX) + np.abs(foodLocalPosY))
 
 		self.position += Vector2(foodLocalPosX*Scale, foodLocalPosY*Scale)
 		self.eat()
@@ -113,10 +125,17 @@ class Player:
 			self.energy += food.energy
 			food.regenerate()
 
-	def dead(self):
-		print('dead')
-		del self
+	def set_value(self):
+		self.speciesId 	= Color(np.random.randint(256), np.random.randint(256), np.random.randint(256))
+		self.hp			= np.random.randint(PLAYER_MAX_HP)
+		self.maxEnergy	= np.random.randiht(PLAYER_MAX_ENERGY)
+		self.breedEnergy= np.random.randint(self.maxEnergy)
+		self.energy		= np.random.randint(self.maxEnergy)
+		self.speed		= np.random.uniform(PLAYER_MAX_SPEED)
 
+	def breed(self):
+		if self.energy > self.breedEnergy:
+			...
 
 #임시
 class _Food:
@@ -128,7 +147,8 @@ class _Food:
 		self.position = Vector2(
 						np.random.uniform(WORLD_WIDTH_SCALE), 
 					   	np.random.uniform(WORLD_HIGHT_SCALE))
-		
+
+	
 def find_closest_point_arg(points: np.array, target: np.array) -> int:
 	dists = np.sum((points - target)**2, axis=1)
 	return np.argmin(dists)
